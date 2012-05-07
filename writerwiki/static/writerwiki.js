@@ -4,7 +4,7 @@ function snapshotClick(event, element) {
     var body = $("textarea")[0].value
     var page = $(element).attr("data-page")
     var obj = { content : body, commit : true }
-    $.post('/page/' + page, obj)
+    $.post('/page/' + page, obj, function() { updateDateDisplay($("#last_snapshot")) })
 }
 
 function templateInsertClick(even, element){
@@ -18,17 +18,13 @@ function worksLinkClick(event, element) {
     event.preventDefault()
     
     $.get('/api/works', function(t) {
+        
         var j = eval('(' + t + ')')
         j = workLink(j)
-        var frag = columnLayout("works", 4, j, "Works")
-        $('body').append(frag)
-        centerPopup("#works");
-        $("#works").fadeIn("fast")
-        $('#backplate').click(function () {
-            $("#works").fadeOut("fast").detach()
-            $("#backplate").css("display", "none").unbind("click")
-        })
-        $("#backplate").css("display", "block")
+        
+        popup("works", "Work", j)
+        
+        
         $(".linkwork").click(function(event) {
             event.preventDefault()
             work = $(this).attr("data-work")
@@ -59,15 +55,7 @@ function allPageClick(event, element) {
     $.get('/api/pages', function(t) {
         var j = eval('(' + t + ')')
         j = accessLink(j)
-        frag = columnLayout("allpages", 4, j, "All Pages")
-        $('body').append(frag)
-        centerPopup("#allpages");
-        $("#allpages").fadeIn("fast");
-        $('#backplate').click(function () {
-            $("#allpages").fadeOut("fast").detach()
-            $("#backplate").css("display", "none").unbind("click")
-        })
-        $("#backplate").css("display", "block")
+        popup("allpages", "All Pages", j)
     }) 
 }
 
@@ -77,15 +65,8 @@ function workingSetClick(event, element){
     $.get('/api/working', function(t) {
         var j = eval('(' + t + ')')
         j = accessRemoveLink(j, '/api/working', "x")
-        frag = columnLayout("workingset", 4, j, "Current Working Set")
-        $('body').append(frag)
-        centerPopup("#workingset");
-        $("#workingset").fadeIn("fast");
-        $('#backplate').click(function () {
-            $("#workingset").fadeOut("fast").detach()
-            $("#backplate").css("display", "none").unbind("click")
-        })
-        $("#backplate").css("display", "block")
+        
+        popup("workingset", "Current Working Set", j)
         
         $(".removelink").click(function(event) {
             event.preventDefault()
@@ -106,15 +87,9 @@ function tagsLinkClick(event, element){
     $.get('/api/tags', function(t) {
         var j = eval('(' + t + ')')
         j = tagLink(j)
-        var frag = columnLayout("tagcloud", 4, j, "Tags")
-        $('body').append(frag)
-        centerPopup("#tagcloud");
-        $("#tagcloud").fadeIn("fast")
-        $('#backplate').click(function () {
-            $("#tagcloud").fadeOut("fast").detach()
-            $("#backplate").css("display", "none").unbind("click")
-        })
-        $("#backplate").css("display", "block")
+        
+        popup("tagcloud", "Tags", j)
+        
         $(".linktag").click(function(event) {
             event.preventDefault()
             
@@ -141,6 +116,20 @@ function tagsLinkClick(event, element){
 }
 
 // layout methods
+
+function popup(id, title, list)
+{
+    var frag = columnLayout(id, 4, list, title)
+    $('body').append(frag)
+    centerPopup("#" + id);
+    $("#" + id).fadeIn("fast")
+    $('#backplate').click(function () {
+        $("#" + id).fadeOut("fast").detach()
+        $("#backplate").css("display", "none").unbind("click")
+    })
+    $("#backplate").css("display", "block")
+}
+
 
 function centerPopup(popup) {  
     //request data for centering  
@@ -226,7 +215,8 @@ function periodicSave(page_name)
 {
     var body = $("textarea")[0].value
     doSave(page_name, body)
-    // save every 30 seconds
+    // save every 20 seconds
+    updateDateDisplay($("#last_saved"))
     var t = setTimeout("periodicSave('" + page_name + "')", 20000);
 }
 
@@ -234,6 +224,18 @@ function doSave(name, body)
 {
     var obj = { content : body }
     $.post('/page/' + name, obj)
+}
+
+function updateDateDisplay(element)
+{
+    var date = new Date()
+    var month = ('0' + (date.getMonth() + 1)).substr(-2,2)
+    var day = ('0' + date.getDate()).substr(-2,2)
+    var year = date.getFullYear()
+    var hours = ('0' + date.getHours()).substr(-2,2)
+    var minutes = ('0' + date.getMinutes()).substr(-2,2)
+    var seconds = ('0' + date.getSeconds()).substr(-2,2)
+    element.html(hours + ":" + minutes + ":" + seconds + " on " + day + "-" + month + "-" + year)
 }
 
 function workingSetButton(page)

@@ -177,7 +177,10 @@ class DAO(object):
     def add_all_commit(self):
         msg = "commit latest, adding " + ", ".join(self.repo.untracked_files)
         self.repo.git.add(".")
-        self.repo.git.commit("-m \"" + msg + "\"")
+        try:
+            self.repo.git.commit("-m \"" + msg + "\"")
+        except git.GitCommandError:
+            pass
     
     # Templates - currently not used
     ###################################################################

@@ -38,6 +38,11 @@ $(document).ready(function(){
 <section id="main">
 <h1>{{ page.name }}</h1>
 
+<p>
+<strong>Last Saved:</strong><span id="last_saved">...</span>&nbsp;&nbsp;
+<strong>Last Snapshot:</strong><span id="last_snapshot">...</span>
+</p>
+
 <form id="wiki">
     <textarea id="textarea" data-page="{{ page.name }}" name="content">{{ page.content.read() }}</textarea><br>
 </form>
