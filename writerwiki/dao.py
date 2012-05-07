@@ -9,8 +9,8 @@ class DAO(object):
         self.resources = os.path.join(self.repo_path, "resources")
         self.templates = os.path.join(self.repo_path, "templates")
         self.works = os.path.join(self.repo_path, "works")
+        self.status = os.path.join(self.repo_path, "state.json")
         self.repo = git.Repo(self.repo_path)
-        self.status = os.path.join(self.repo_path, "status.json")
     
     # Initialise the storage
     ###################################################################
@@ -78,12 +78,23 @@ class DAO(object):
         f.write(page.content.read())
         f.close()
     
+    def get_all_pages(self):
+        files = [f[:-4] for f in os.listdir(self.pages)]
+        files.sort()
+        return files
+    
+    def get_recently_modified_pages(self, limit=-1):
+        files = self._list_recently_modified_files(self.pages, limit)
+        start = len(self.pages) + 1
+        end = len(".txt")
+        return [f[start:-end] for f in files]
+    
     # manage the working set
     ###################################################################
     
     def get_workingset(self):
         status = self.get_status()
-        f = status['working_set']
+        f = status.get('working_set', [])
         f.sort()
         return f
     
@@ -98,17 +109,12 @@ class DAO(object):
     
     def get_tags(self, page):
         path = os.path.join(self.repo_path, "tags.json")
-        with open(path) as f: 
-            s = f.read()
-            if s is not None and s != "":
-                j = json.loads(f.read())
-            else:
-                j = {}
+        j = self._json_read(path)
         return j.get('pages', {}).get(page, [])
     
     def set_tags(self, page, tags):
         path = os.path.join(self.repo_path, "tags.json")
-        with open(path) as f: j = json.loads(f.read())
+        j = self._json_read(path)
         
         if not j.has_key("pages"):
             j['pages'] = {}
@@ -132,17 +138,12 @@ class DAO(object):
     
     def get_all_tags(self):
         path = os.path.join(self.repo_path, "tags.json")
-        with open(path) as f: 
-            s = f.read()
-            if s is not None and s != "":
-                j = json.loads(s)
-            else:
-                j = {}
+        j = self._json_read(path)
         return j.get('cloud', [])
     
     def get_tagged_pages(self, tag):
         path = os.path.join(self.repo_path, "tags.json")
-        with open(path) as f: j = json.loads(f.read())
+        j = self._json_read(path)
         return j.get('tags', {}).get(tag, [])
     
     # Works
@@ -157,14 +158,30 @@ class DAO(object):
         path = os.path.join(self.repo_path, "works", work_name + ".json")
         if not os.path.isfile(path):
             return None
-        with open(path) as f: return json.loads(f.read())
+        return self._json_read(path)
+    
+    # Status
+    ###################################################################
+    
+    def get_status(self):
+        return self._json_read(self.status)
+    
+    def save_status(self, status):
+        f = open(self.status, "w")
+        f.write(json.dumps(status))
+        f.close()
         
+    # Version Control
+    ###################################################################
     
     def add_all_commit(self):
         msg = "commit latest, adding " + ", ".join(self.repo.untracked_files)
         self.repo.git.add(".")
         self.repo.git.commit("-m \"" + msg + "\"")
-        
+    
+    # Templates - currently not used
+    ###################################################################
+    
     def get_template_names(self):
         return [fn[:-4] for fn in os.listdir(self.templates) if fn.endswith("txt")]
         
@@ -173,26 +190,8 @@ class DAO(object):
         f = open(path, "r")
         return Template(name, f)
     
-    def get_all_pages(self):
-        files = [f[:-4] for f in os.listdir(self.pages)]
-        files.sort()
-        return files
-    
-    def get_status(self):
-        return json.loads(open(self.status).read())
-    
-    def save_status(self, status):
-        f = open(self.status, "w")
-        f.write(json.dumps(status))
-        f.close()
-    
-    
-    
-    def get_recently_modified_pages(self, limit=-1):
-        files = self._list_recently_modified_files(self.pages, limit)
-        start = len(self.pages) + 1
-        end = len(".txt")
-        return [f[start:-end] for f in files]
+    # Utilities
+    ###################################################################
         
     def _list_recently_modified_files(self, path, limit=-1):
         date_file_list = []
@@ -207,4 +206,13 @@ class DAO(object):
             l = l[:limit]
         return l
     
+    def _json_read(self, file):
+        with open(file) as f:
+            s = f.read()
+            j = None
+            if s is not None and s != "":
+                j = json.loads(s)
+            else:
+                j = {}
+        return j
     

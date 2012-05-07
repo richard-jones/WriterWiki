@@ -7,30 +7,17 @@
     <link rel="stylesheet" type="text/css" href="/static/bootstrap.css"/>
     <link rel="stylesheet" type="text/css" href="/static/styles.css"/>
     <script type="text/javascript" src="/static/jquery.js"></script>
+    <script type="text/javascript" src="/static/writerwiki.js"></script>
     
     <script type="text/javascript">
 
 $(document).ready(function(){
-    periodicSave()
-    workingSetButton()
-    pageTags()
+    periodicSave("{{ page.name }}")
+    workingSetButton("{{ page.name }}")
+    pageTags("{{ page.name }}")
     
-    $('#snapshot').click(function(){
-        var body = $("textarea")[0].value
-        var obj = { content : body, commit : true }
-        $.post('/page/{{ page.name }}', obj)
-    });
-    
-    $('#insert_template').click(function(){
-        var name = $('#template')[0].value
-        $.get('/template/' + name + ".txt", function(t){
-            $("textarea")[0].value += t
-        })
-    });
-    
-    $('#addtowork').click(function() {
-        
-    });
+    $('#snapshot').click(function(event) { snapshotClick(event, this) });
+    $('#addtowork').click(function(event) { worksLinkClick(event, this) });
     
  });
  
@@ -40,86 +27,6 @@ $(document).ready(function(){
     var obj = { content : body, commit : true }
     $.post('/page/{{ page.name }}', obj)
 });
-
-function periodicSave()
-{
-    var body = $("textarea")[0].value
-    doSave("{{ page.name }}", body)
-    // save every 30 seconds
-    var t = setTimeout("periodicSave()", 20000);
-}
-
-function doSave(name, body)
-{
-    var obj = { content : body }
-    $.post('/page/' + name, obj)
-}
-
-function workingSetButton()
-{
-    $.get('/api/working', function(t) {
-        var page = "{{ page.name }}"
-        var j = eval("(" + t + ")")
-        var contains = false;
-        for (var i = 0; i < j.length; i++)
-        {
-            if (j[i] === page)
-            {
-                contains = true;
-                break;
-            }
-        }
-        if (contains)
-        {
-            removeFromWorkingSetButton()
-        }
-        else
-        {
-            addToWorkingSetButton()
-        }
-    });
-}
-
-function addToWorkingSetButton()
-{
-    $('#removefromworkingset').detach()
-    $('#toolsform').append('<input id="addtoworkingset" type="button" value="Add to WorkingSet">')
-    $("#addtoworkingset").click(function(){
-        $.post('/api/working/{{ page.name }}', removeFromWorkingSetButton);
-    });
-}
-
-function removeFromWorkingSetButton()
-{
-    $('#addtoworkingset').detach()
-    $('#toolsform').append('<input id="removefromworkingset" type="button" value="Remove from WorkingSet">')
-    $('#removefromworkingset').click(function() {
-        $.ajax('/api/working/{{ page.name }}', {"type" : "DELETE"})
-            .success(addToWorkingSetButton);
-    });
-}
-
-function pageTags()
-{
-    $.get('/api/tags/{{ page.name }}', function(t) {
-        var j = eval("(" + t + ")")
-        var tags = ""
-        for (var i = 0; i < j.length; i++)
-        {
-            if (i > 0)
-            {
-                tags += ", "
-            }
-            tags += j[i]
-        }
-        $('#wiki').append('<strong>Tags</strong>&nbsp;<input type="text" id="tags" name="tags" value="' + tags + '">')
-        $('#tags').blur(function() {
-            var body = $(this)[0].value
-            var obj = { tags : body }
-            $.post('/api/tags/{{ page.name }}', obj)
-        });
-    });
-}
 
     </script>
 </head>
@@ -132,7 +39,7 @@ function pageTags()
 <h1>{{ page.name }}</h1>
 
 <form id="wiki">
-    <textarea id="textarea" name="content">{{ page.content.read() }}</textarea><br>
+    <textarea id="textarea" data-page="{{ page.name }}" name="content">{{ page.content.read() }}</textarea><br>
 </form>
 </section>
 
@@ -147,8 +54,8 @@ function pageTags()
     </select><br>
     <input id="insert_template" type="button" value="Insert Template"><br>
     -->
-    <input id="snapshot" type="button" value="Snapshot">
-    <input id="addtowork" type="button" value="Add to Work">
+    <input id="snapshot" data-page="{{ page.name }}" type="button" value="Snapshot">
+    <input id="addtowork" data-page="{{ page.name }}" type="button" value="Add to Work">
 </form>
 </nav>
 
