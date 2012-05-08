@@ -15,9 +15,10 @@ $(document).ready(function(){
     periodicSave("{{ page.name }}")
     workingSetButton("{{ page.name }}")
     pageTags("{{ page.name }}")
+    pageWorks("{{ page.name }}")
     
     $('#snapshot').click(function(event) { snapshotClick(event, this) });
-    $('#addtowork').click(function(event) { worksLinkClick(event, this) });
+    $('#addtowork').click(function(event) { worksButtonClick(event, this) });
     
  });
  
@@ -37,6 +38,8 @@ $(document).ready(function(){
 
 <section id="main">
 <h1>{{ page.name }}</h1>
+
+<span id="list_of_works">(not in any works)</span>
 
 <p>
 <strong>Last Saved:</strong><span id="last_saved">...</span>&nbsp;&nbsp;

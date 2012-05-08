@@ -157,8 +157,13 @@ class DAO(object):
     def get_work(self, work_name):
         path = os.path.join(self.repo_path, "works", work_name + ".json")
         if not os.path.isfile(path):
-            return None
+            return {}
         return self._json_read(path)
+        
+    def save_work(self, work_name, work):
+        path = os.path.join(self.repo_path, "works", work_name + ".json")
+        with open(path, "w") as f:
+            f.write(json.dumps(work))
     
     # Status
     ###################################################################

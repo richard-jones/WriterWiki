@@ -82,3 +82,20 @@ class WriterWiki(object):
     def get_work_pages(self, work_name):
         work = self.dao.get_work(work_name)
         return work.get("pages", [])
+        
+    def add_to_work(self, work, page):
+        w = self.dao.get_work(work)
+        if not w.has_key("pages"):
+            w["pages"] = []
+        if page not in w["pages"]:
+            w["pages"].append(page)
+        self.dao.save_work(work, w)
+        
+    def get_works_for_page(self, page):
+        page_works = []
+        works = self.get_work_names()
+        for work_name in works:
+            work = self.dao.get_work(work_name)
+            if page in work.get("pages", []):
+                page_works.append(work_name)
+        return page_works

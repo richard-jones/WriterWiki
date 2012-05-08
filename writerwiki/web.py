@@ -27,6 +27,12 @@ def page(name=None):
             wiki.snapshot()
         return ""
 
+@app.route("/api/page/<name>/works", methods=['GET'])
+def page_works(name):
+    if request.method == "GET":
+        works = wiki.get_works_for_page(name)
+        return json.dumps(works)
+
 @app.route("/template/<name>")
 def template(name=None):
     raw = False
@@ -44,7 +50,7 @@ def resource(path=None):
     return render_template('resource.html', resource=path)
 
 @app.route("/api/works", methods=['GET'])
-@app.route("/api/work/<name>", methods=['GET'])
+@app.route("/api/work/<name>", methods=['GET', 'POST'])
 def work(name=None):
     if request.method == "GET":
         if name is None:
@@ -53,6 +59,10 @@ def work(name=None):
         else:
             pages = wiki.get_work_pages(name)
             return json.dumps(pages)
+    elif request.method == "POST":
+        page = request.form.get("page")
+        wiki.add_to_work(name, page)
+        return ""
 
 @app.route("/api/pages", methods=['GET'])
 def pages():

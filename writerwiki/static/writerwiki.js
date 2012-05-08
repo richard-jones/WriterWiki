@@ -18,33 +18,79 @@ function worksLinkClick(event, element) {
     event.preventDefault()
     
     $.get('/api/works', function(t) {
-        
         var j = eval('(' + t + ')')
         j = workLink(j)
         
-        popup("works", "Work", j)
-        
+        frag = '<a href="#" id="newwork" >[Add New Work]</a><br>'
+        popup("works", "Work", j, frag)
         
         $(".linkwork").click(function(event) {
             event.preventDefault()
-            work = $(this).attr("data-work")
+            var work = $(this).attr("data-work")
             $.get($(this).attr("href"), function(t) {
                 var j = eval('(' + t + ')')
                 j = accessLink(j)
-                var frag = columnLayout("workpages", 4, j, "Pages in <em>" + work + "</em>")
-                $('body').append(frag)
-                centerPopup("#workpages");
-                $("#workpages").fadeIn("fast");
-                $('#backplate').unbind("click");
-                $('#backplate').click(function () {
-                    $("#workpages").fadeOut("fast").detach()
-                    $("#backplate").unbind("click")
-                    $('#backplate').click(function () {
-                        $("#works").fadeOut("fast").detach()
-                        $("#backplate").css("display", "none").unbind("click")
-                    })
-                })
+                popupPopup("workpages", "Pages in <em>" + work + "</em>", j, "works")
             });
+        });
+        
+        $("#newwork").click(function(event) {
+            event.preventDefault();
+            newWorkForm("works")
+        });
+    });
+}
+
+function newWorkForm(parent_id)
+{
+    frag = '<div id="newworkform"> \
+            <strong>Create new work</strong><br> \
+        <form> \
+            Name: <input type="text" name="work_name"><br>\
+            Description: \
+            <textarea name="work_description"></textarea><br> \
+            <input type="submit" name="submit" value="Create"> \
+        </form> \
+    </div>'
+    $('body').append(frag)
+    centerPopup("#newworkform");
+    $("#newworkform").fadeIn("fast")
+    
+    $('#backplate').unbind("click");
+    $('#backplate').click(function () {
+        $("#newworkform").fadeOut("fast").detach()
+        $("#backplate").unbind("click")
+        $('#backplate').click(function () {
+            $("#" + parent_id).fadeOut("fast").detach()
+            $("#backplate").css("display", "none").unbind("click")
+        })
+    })
+}
+
+function worksButtonClick(event, element) {
+    event.preventDefault()
+    
+    var page = $(element).attr('data-page')
+    $.get('/api/works', function(t) {
+        var j = eval('(' + t + ')')
+        j = addToWorkLink(j)
+        
+        frag = '<a href="#" id="newwork" >[Add New Work]</a><br>'
+        popup("works", "Work", j, frag)
+        
+        $(".addtowork").click(function(event) {
+            event.preventDefault()
+            var work = $(this).attr("data-work")
+            var obj = { "page" :  page }
+            $.post($(this).attr("href"), obj, function(t) {
+                $("#works").fadeOut("fast").detach()
+                $("#backplate").css("display", "none").unbind("click")
+            });
+        });
+        
+        $("#newwork").click(function(event) {
+            event.preventDefault();
+            newWorkForm("works")
         });
     });
 }
@@ -87,7 +133,6 @@ function tagsLinkClick(event, element){
     $.get('/api/tags', function(t) {
         var j = eval('(' + t + ')')
         j = tagLink(j)
-        
         popup("tagcloud", "Tags", j)
         
         $(".linktag").click(function(event) {
@@ -97,19 +142,7 @@ function tagsLinkClick(event, element){
             $.get($(this).attr("href"), function(t) {
                 var j = eval('(' + t + ')')
                 j = accessLink(j)
-                var frag = columnLayout("taggedpages", 4, j, "Pages tagged with <em>" + tag + "</em>")
-                $('body').append(frag)
-                centerPopup("#taggedpages");
-                $("#taggedpages").fadeIn("fast");
-                $('#backplate').unbind("click");
-                $('#backplate').click(function () {
-                    $("#taggedpages").fadeOut("fast").detach()
-                    $("#backplate").unbind("click")
-                    $('#backplate').click(function () {
-                        $("#tagcloud").fadeOut("fast").detach()
-                        $("#backplate").css("display", "none").unbind("click")
-                    })
-                })
+                popupPopup("taggedpages", "Pages tagged with <em>" + tag + "</em>", j, "tagcloud")
             });
         });
     });
@@ -117,9 +150,13 @@ function tagsLinkClick(event, element){
 
 // layout methods
 
-function popup(id, title, list)
+function popup(id, title, list, prepend)
 {
-    var frag = columnLayout(id, 4, list, title)
+    if (prepend == undefined)
+    {
+        prepend = ""
+    }
+    var frag = columnLayout(id, 4, list, title, prepend)
     $('body').append(frag)
     centerPopup("#" + id);
     $("#" + id).fadeIn("fast")
@@ -130,6 +167,22 @@ function popup(id, title, list)
     $("#backplate").css("display", "block")
 }
 
+function popupPopup(id, title, list, parent_id)
+{
+    var frag = columnLayout(id, 4, list, title)
+    $('body').append(frag)
+    centerPopup("#" + id);
+    $("#" + id).fadeIn("fast");
+    $('#backplate').unbind("click");
+    $('#backplate').click(function () {
+        $("#" + id).fadeOut("fast").detach()
+        $("#backplate").unbind("click")
+        $('#backplate').click(function () {
+            $("#" + parent_id).fadeOut("fast").detach()
+            $("#backplate").css("display", "none").unbind("click")
+        })
+    })
+}
 
 function centerPopup(popup) {  
     //request data for centering  
@@ -146,9 +199,10 @@ function centerPopup(popup) {
     });
 }
 
-function columnLayout(id, n, pages, title) {
+function columnLayout(id, n, pages, title, prepend) {
     frag = '<div id="' + id + '"> \
             <strong>' + title + '</strong><br> \
+            ' + prepend + ' \
             <table> \
                 <tr> \
                     <td>'
@@ -205,6 +259,15 @@ function workLink(works) {
     for (var i = 0; i < works.length; i++)
     {
         n.push('<a class="linkwork" data-work="' + works[i] + '" href="/api/work/' + works[i] + '">' + works[i] + '</a>')
+    }
+    return n
+}
+
+function addToWorkLink(works) {
+    n = []
+    for (var i = 0; i < works.length; i++)
+    {
+        n.push('<a class="addtowork" data-work="' + works[i] + '" href="/api/work/' + works[i] + '">' + works[i] + '</a>')
     }
     return n
 }
@@ -301,4 +364,30 @@ function pageTags(page)
             $.post('/api/tags/' + page, obj)
         });
     });
+}
+
+function pageWorks(page)
+{
+    $.get('/api/page/' + page + "/works", function(t) {
+        var j = eval("(" + t + ")")
+        var works = ""
+        for (var i = 0; i < j.length; i++)
+        {
+            if (i > 0)
+            {
+                works += ", "
+            }
+            works += "<em>" + j[i] + "</em>"
+        }
+        if (works === "")
+        {
+            return;
+        }
+        var plural = ""
+        if (j.length > 1)
+        {
+            plural = "s"
+        }
+        $('#list_of_works').html("in work" + plural + " " + works)
+    })
 }
