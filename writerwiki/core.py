@@ -99,3 +99,11 @@ class WriterWiki(object):
             if page in work.get("pages", []):
                 page_works.append(work_name)
         return page_works
+        
+    def add_work(self, name, desc):
+        work = self.dao.get_work(name)
+        if work is None:
+            work = {}
+        work["name"] = name
+        work["description"] = desc
+        self.dao.save_work(name, work)

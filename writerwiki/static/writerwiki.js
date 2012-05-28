@@ -45,11 +45,11 @@ function newWorkForm(parent_id)
 {
     frag = '<div id="newworkform"> \
             <strong>Create new work</strong><br> \
-        <form> \
+        <form id="createnewworkform"> \
             Name: <input type="text" name="work_name"><br>\
             Description: \
             <textarea name="work_description"></textarea><br> \
-            <input type="submit" name="submit" value="Create"> \
+            <input id="createnewwork" type="submit" name="submit" value="Create"> \
         </form> \
     </div>'
     $('body').append(frag)
@@ -65,6 +65,23 @@ function newWorkForm(parent_id)
             $("#backplate").css("display", "none").unbind("click")
         })
     })
+    
+    $("#createnewwork").click(function(event) {
+        event.preventDefault()
+        var page = $('body').attr('data-page');
+        var name = $('#createnewworkform input[name="work_name"]')[0].value;
+        var desc = $('#createnewworkform textarea')[0].value;
+        var obj = { "name" : name, "description" : desc }
+        $.post('/api/works', obj, function(t) {
+            var o = { "page" :  page }
+            $.post('/api/work/' + name, o, function(t) {
+                pageWorks(page)
+                $('#' + parent_id).fadeOut("fast").detach()
+                $("#newworkform").fadeOut("fast").detach()
+                $("#backplate").css("display", "none").unbind("click")
+            });
+        });
+    });
 }
 
 function worksButtonClick(event, element) {
@@ -92,6 +109,16 @@ function worksButtonClick(event, element) {
             event.preventDefault();
             newWorkForm("works")
         });
+    });
+}
+
+// ?
+function addPageToWork(page, work, callback)
+{
+    var obj = { "page" :  page }
+    $.post('/api/work/' + work, obj, function(t) {
+        $("#works").fadeOut("fast").detach()
+        $("#backplate").css("display", "none").unbind("click")
     });
 }
 

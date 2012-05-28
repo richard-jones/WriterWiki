@@ -49,7 +49,7 @@ def template(name=None):
 def resource(path=None):
     return render_template('resource.html', resource=path)
 
-@app.route("/api/works", methods=['GET'])
+@app.route("/api/works", methods=['GET', 'POST'])
 @app.route("/api/work/<name>", methods=['GET', 'POST'])
 def work(name=None):
     if request.method == "GET":
@@ -60,9 +60,15 @@ def work(name=None):
             pages = wiki.get_work_pages(name)
             return json.dumps(pages)
     elif request.method == "POST":
-        page = request.form.get("page")
-        wiki.add_to_work(name, page)
-        return ""
+        if name != None:
+            page = request.form.get("page")
+            wiki.add_to_work(name, page)
+            return ""
+        else:
+            work_name = request.form.get("name")
+            desc = request.form.get("description")
+            wiki.add_work(work_name, desc)
+            return ""
 
 @app.route("/api/pages", methods=['GET'])
 def pages():
